@@ -11,7 +11,7 @@ namespace FastTechFoods.AuthService.Tests
     {
         private readonly Mock<IUserRepository> _userRepoMock;
         private readonly Mock<ITokenService> _tokenServiceMock;
-        private readonly IAuthService _authService;
+        private readonly IUserService _authService;
 
         public UserServiceTests()
         {

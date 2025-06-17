@@ -20,5 +20,15 @@ namespace FastTechFoods.AuthService.Infrastructure.Repositories
 
         public Task<bool> ExistsAsync(string email, string cpf) =>
             _context.Users.AnyAsync(u => u.Email == email || u.Cpf == cpf);
+
+        public async Task<IEnumerable<User>> GetAllAsync()
+        {
+            return await _context.Users.ToListAsync();
+        }
+
+        public async Task<IEnumerable<User>> GetByRoleAsync(string role)
+        {
+            return await _context.Users.Where(u => u.Role == role).ToListAsync();
+        }
     }
 }

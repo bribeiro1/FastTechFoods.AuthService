@@ -1,16 +1,39 @@
 ﻿using FastTechFoods.AuthService.Application.DTOs;
 using FastTechFoods.AuthService.Application.Interfaces;
 using FastTechFoods.AuthService.Domain.Constants;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace FastTechFoods.AuthService.Api.Controllers
 {
     [ApiController]
-    [Route("api/auth")]
-    public class AuthController : ControllerBase
+    [Route("api/user")]
+    public class UserController : ControllerBase
     {
-        private readonly IAuthService _authService;
-        public AuthController(IAuthService authService) => _authService = authService;
+        private readonly IUserService _userService;
+        public UserController(IUserService authService) => _userService = authService;
+
+        /// <summary>
+        /// Lista os usuários do sistema.
+        /// Gerente vê todos, Atendente vê apenas clientes.
+        /// </summary>
+        [HttpGet]
+        [Authorize]
+        [ProducesResponseType(typeof(IEnumerable<UserDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> GetAll()
+        {
+            var role = User.FindFirst(ClaimTypes.Role)?.Value;
+            IEnumerable<UserDto> users;
+
+            if (string.IsNullOrEmpty(role)) return Forbid();
+            if (role == UserRoles.Gerente) users = await _userService.GetAllUsersAsync();
+            else if (role == UserRoles.Atendente) users = await _userService.GetUsersByRoleAsync(UserRoles.Cliente);
+            else return Forbid();
+
+            return Ok(users);
+        }
 
         /// <summary>
         /// Realiza o login de um usuário com CPF ou Email e senha.
@@ -20,7 +43,7 @@ namespace FastTechFoods.AuthService.Api.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            var result = await _authService.AuthenticateAsync(request);
+            var result = await _userService.AuthenticateAsync(request);
             return result.IsAuthenticated ? Ok(result) : Unauthorized(result);
         }
 
@@ -44,8 +67,10 @@ namespace FastTechFoods.AuthService.Api.Controllers
                     return Forbid();
             }
 
-            var result = await _authService.RegisterAsync(request);
-            return result.IsAuthenticated ? Ok(result) : BadRequest("Erro ao registrar usuário");
+            var result = await _userService.RegisterAsync(request);
+            return result.IsAuthenticated
+                ? Ok(result)
+                : BadRequest(result.Message);
         }
     }
 }

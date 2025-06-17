@@ -6,7 +6,7 @@ using FastTechFoods.AuthService.Domain.Interfaces;
 
 namespace FastTechFoods.AuthService.Application.Services
 {
-    public class UserService : IAuthService
+    public class UserService : IUserService
     {
         private readonly IUserRepository _repo;
         private readonly ITokenService _token;
@@ -42,6 +42,18 @@ namespace FastTechFoods.AuthService.Application.Services
 
             await _repo.AddAsync(user);
             return AuthResponse.Success(user, _token.GenerateToken(user));
+        }
+
+        public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
+        {
+            var users = await _repo.GetAllAsync();
+            return users.Select(u => new UserDto(u));
+        }
+
+        public async Task<IEnumerable<UserDto>> GetUsersByRoleAsync(string role)
+        {
+            var users = await _repo.GetByRoleAsync(role);
+            return users.Select(u => new UserDto(u));
         }
     }
 }

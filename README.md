@@ -18,11 +18,11 @@ Este é o serviço de autenticação da plataforma **FastTechFoods**, responsáv
 
 ```
 FastTechFoods.AuthService/
-├── Api/                   # Controllers e configuração do ASP.NET
-├── Application/           # DTOs, Services e Validators
-├── Domain/                # Entidades e constantes (ex: UserRoles)
-├── Infrastructure/        # EF DbContext, Repositórios e Serviços auxiliares
-├── Tests/                 # Testes unitários com xUnit
+Api/                   # Controllers e configuração do ASP.NET
+Application/           # DTOs, Services e Validators
+Domain/                # Entidades e constantes (ex: UserRoles)
+Infrastructure/        # EF DbContext, Repositórios e Serviços auxiliares
+Tests/                 # Testes unitários com xUnit
 ```
 
 ---

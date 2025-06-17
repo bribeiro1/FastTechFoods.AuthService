@@ -15,9 +15,10 @@ namespace FastTechFoods.AuthService.Infrastructure
                 context.Users.Add(new User
                 {
                     Id = Guid.NewGuid(),
-                    Email = "master@fasttech.com",
-                    Cpf = "09109395946",
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin@master"),
+                    Name = "Administrador",
+                    Email = "admin@fasttechfoods.com",
+                    Cpf = "12345678910",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin@123"),
                     Role = "Gerente"
                 });
                 context.SaveChanges();

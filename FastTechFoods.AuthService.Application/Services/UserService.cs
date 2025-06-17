@@ -3,6 +3,7 @@ using FastTechFoods.AuthService.Application.Interfaces;
 using FastTechFoods.AuthService.Domain.Constants;
 using FastTechFoods.AuthService.Domain.Entities;
 using FastTechFoods.AuthService.Domain.Interfaces;
+using FluentValidation;
 
 namespace FastTechFoods.AuthService.Application.Services
 {
@@ -10,21 +11,46 @@ namespace FastTechFoods.AuthService.Application.Services
     {
         private readonly IUserRepository _repo;
         private readonly ITokenService _token;
-        public UserService(IUserRepository repo, ITokenService token)
+        private readonly IValidator<RegisterRequest> _registerValidator;
+        private readonly IValidator<LoginRequest> _loginValidator;
+
+        public UserService(
+            IUserRepository repo,
+            ITokenService token,
+            IValidator<RegisterRequest> registerValidator,
+            IValidator<LoginRequest> loginValidator)
         {
             _repo = repo;
             _token = token;
+            _registerValidator = registerValidator;
+            _loginValidator = loginValidator;
         }
+
         public async Task<AuthResponse> AuthenticateAsync(LoginRequest request)
         {
+            var validation = await _loginValidator.ValidateAsync(request);
+            if (!validation.IsValid)
+            {
+                var msg = string.Join(" | ", validation.Errors.Select(e => e.ErrorMessage));
+                return AuthResponse.Fail(msg);
+            }
+
             var user = await _repo.GetByEmailOrCpfAsync(request.Login);
             if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
                 return AuthResponse.Fail("Credenciais inválidas");
+
             return AuthResponse.Success(user, _token.GenerateToken(user));
         }
 
         public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
         {
+            var validation = await _registerValidator.ValidateAsync(request);
+            if (!validation.IsValid)
+            {
+                var msg = string.Join(" | ", validation.Errors.Select(e => e.ErrorMessage));
+                return AuthResponse.Fail(msg);
+            }
+
             if (!UserRoles.Todos.Contains(request.Role))
                 return AuthResponse.Fail("Role inválida");
 
@@ -34,6 +60,7 @@ namespace FastTechFoods.AuthService.Application.Services
             var user = new User
             {
                 Id = Guid.NewGuid(),
+                Name = request.Name,
                 Email = request.Email,
                 Cpf = request.Cpf,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),

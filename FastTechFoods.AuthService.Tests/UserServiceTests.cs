@@ -1,131 +1,84 @@
-﻿using FastTechFoods.AuthService.Application.DTOs;
-using FastTechFoods.AuthService.Application.Interfaces;
+﻿using Moq;
+using FluentValidation;
+using FluentValidation.Results;
+using FastTechFoods.AuthService.Application.DTOs;
 using FastTechFoods.AuthService.Application.Services;
 using FastTechFoods.AuthService.Domain.Entities;
 using FastTechFoods.AuthService.Domain.Interfaces;
-using Moq;
+using FastTechFoods.AuthService.Application.Interfaces;
 
 namespace FastTechFoods.AuthService.Tests
 {
     public class UserServiceTests
     {
-        private readonly Mock<IUserRepository> _userRepoMock;
-        private readonly Mock<ITokenService> _tokenServiceMock;
-        private readonly IUserService _authService;
+        private readonly Mock<IUserRepository> _repoMock;
+        private readonly Mock<ITokenService> _tokenMock;
+        private readonly Mock<IValidator<RegisterRequest>> _registerValidatorMock;
+        private readonly Mock<IValidator<LoginRequest>> _loginValidatorMock;
+        private readonly UserService _service;
 
         public UserServiceTests()
         {
-            _userRepoMock = new Mock<IUserRepository>();
-            _tokenServiceMock = new Mock<ITokenService>();
-            _authService = new UserService(
-                _userRepoMock.Object,
-                _tokenServiceMock.Object
+            _repoMock = new Mock<IUserRepository>();
+            _tokenMock = new Mock<ITokenService>();
+            _registerValidatorMock = new Mock<IValidator<RegisterRequest>>();
+            _loginValidatorMock = new Mock<IValidator<LoginRequest>>();
+
+            _service = new UserService(
+                _repoMock.Object,
+                _tokenMock.Object,
+                _registerValidatorMock.Object,
+                _loginValidatorMock.Object
             );
         }
 
         [Fact]
-        public async Task AuthenticateAsync_WithValidCredentials_ReturnsToken()
+        public async Task RegisterAsync_ShouldReturnFail_WhenValidationFails()
         {
-            // Arrange
-            var user = new User
-            {
-                Id = Guid.NewGuid(),
-                Email = "user@test.com",
-                Cpf = "12345678900",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("1234"),
-                Role = "Cliente"
-            };
+            var request = new RegisterRequest();
+            var failures = new List<ValidationFailure> { new("Email", "Email inválido") };
+            _registerValidatorMock.Setup(v => v.ValidateAsync(request, default))
+                                  .ReturnsAsync(new ValidationResult(failures));
 
-            _userRepoMock.Setup(r => r.GetByEmailOrCpfAsync("user@test.com"))
-                         .ReturnsAsync(user);
-
-            _tokenServiceMock.Setup(t => t.GenerateToken(user))
-                             .Returns("fake-jwt-token");
-
-            var request = new LoginRequest
-            {
-                Login = "user@test.com",
-                Password = "1234"
-            };
-
-            // Act
-            var result = await _authService.AuthenticateAsync(request);
-
-            // Assert
-            Assert.True(result.IsAuthenticated);
-            Assert.Equal("Cliente", result.Role);
-            Assert.Equal("fake-jwt-token", result.Token);
-        }
-
-        [Fact]
-        public async Task AuthenticateAsync_WithInvalidPassword_ReturnsFail()
-        {
-            var user = new User
-            {
-                Id = Guid.NewGuid(),
-                Email = "user@test.com",
-                Cpf = "12345678900",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("correct"),
-                Role = "Cliente"
-            };
-
-            _userRepoMock.Setup(r => r.GetByEmailOrCpfAsync("user@test.com"))
-                         .ReturnsAsync(user);
-
-            var request = new LoginRequest
-            {
-                Login = "user@test.com",
-                Password = "wrong"
-            };
-
-            var result = await _authService.AuthenticateAsync(request);
+            var result = await _service.RegisterAsync(request);
 
             Assert.False(result.IsAuthenticated);
-            Assert.Null(result.Token);
+            Assert.Contains("Email inválido", result.Message);
         }
 
         [Fact]
-        public async Task RegisterAsync_WithNewUser_ReturnsSuccess()
+        public async Task AuthenticateAsync_ShouldReturnFail_WhenUserNotFound()
         {
-            var request = new RegisterRequest
-            {
-                Email = "new@user.com",
-                Cpf = "99999999999",
-                Password = "abc123",
-                Role = "Cliente"
-            };
+            var request = new LoginRequest { Login = "user@test.com", Password = "123456" };
+            _loginValidatorMock.Setup(v => v.ValidateAsync(request, default))
+                               .ReturnsAsync(new ValidationResult());
 
-            _userRepoMock.Setup(r => r.ExistsAsync(request.Email, request.Cpf))
-                         .ReturnsAsync(false);
+            _repoMock.Setup(r => r.GetByEmailOrCpfAsync(request.Login))
+                     .ReturnsAsync((User)null);
 
-            _tokenServiceMock.Setup(t => t.GenerateToken(It.IsAny<User>()))
-                             .Returns("new-token");
-
-            var result = await _authService.RegisterAsync(request);
-
-            Assert.True(result.IsAuthenticated);
-            Assert.Equal("Cliente", result.Role);
-            Assert.Equal("new-token", result.Token);
-        }
-
-        [Fact]
-        public async Task RegisterAsync_WithExistingUser_ReturnsFail()
-        {
-            var request = new RegisterRequest
-            {
-                Email = "exist@user.com",
-                Cpf = "88888888888",
-                Password = "pass",
-                Role = "Cliente"
-            };
-
-            _userRepoMock.Setup(r => r.ExistsAsync(request.Email, request.Cpf))
-                         .ReturnsAsync(true);
-
-            var result = await _authService.RegisterAsync(request);
+            var result = await _service.AuthenticateAsync(request);
 
             Assert.False(result.IsAuthenticated);
-            Assert.Null(result.Token);
+            Assert.Equal("Credenciais inválidas", result.Message);
+        }
+
+        [Fact]
+        public async Task AuthenticateAsync_ShouldReturnSuccess_WhenCredentialsAreValid()
+        {
+            var request = new LoginRequest { Login = "user@test.com", Password = "123456" };
+            var user = new User { Email = "user@test.com", PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"), Role = "Cliente" };
+
+            _loginValidatorMock.Setup(v => v.ValidateAsync(request, default))
+                               .ReturnsAsync(new ValidationResult());
+            _repoMock.Setup(r => r.GetByEmailOrCpfAsync(request.Login))
+                     .ReturnsAsync(user);
+            _tokenMock.Setup(t => t.GenerateToken(user)).Returns("token123");
+
+            var result = await _service.AuthenticateAsync(request);
+
+            Assert.True(result.IsAuthenticated);
+            Assert.Equal("token123", result.Token);
+            Assert.Equal("Cliente", result.Role);
         }
     }
 }

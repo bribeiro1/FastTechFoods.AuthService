@@ -1,9 +1,11 @@
 using FastTechFoods.AuthService.Application.Interfaces;
 using FastTechFoods.AuthService.Application.Services;
+using FastTechFoods.AuthService.Application.Validators;
 using FastTechFoods.AuthService.Domain.Interfaces;
 using FastTechFoods.AuthService.Infrastructure;
 using FastTechFoods.AuthService.Infrastructure.Repositories;
 using FastTechFoods.AuthService.Infrastructure.Services;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Reflection;
@@ -17,13 +19,19 @@ namespace FastTechFoods.AuthService.Api
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            // DbContext
             builder.Services.AddDbContext<AuthDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+            // Repositórios e Serviços
             builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<ITokenService, TokenService>();
 
+            // FluentValidation
+            builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
+
+            // Autenticação JWT
             builder.Services.AddAuthentication("Bearer")
                 .AddJwtBearer("Bearer", options =>
                 {
@@ -38,6 +46,7 @@ namespace FastTechFoods.AuthService.Api
                     };
                 });
 
+            //Swagger
             builder.Services.AddControllers();
             builder.Services.AddSwaggerGen(options =>
             {
@@ -70,7 +79,6 @@ namespace FastTechFoods.AuthService.Api
                     }
                 });
             });
-
 
             var app = builder.Build();
 

@@ -57,10 +57,6 @@ namespace FastTechFoods.AuthService.Api.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
-            var validRoles = new[] { UserRoles.Gerente, UserRoles.Atendente, UserRoles.Cliente };
-            if (!validRoles.Contains(request.Role))
-                return BadRequest("Perfil inválido.");
-
             if (request.Role != UserRoles.Cliente)
             {
                 if (!User.Identity?.IsAuthenticated ?? true || !User.IsInRole(UserRoles.Gerente))

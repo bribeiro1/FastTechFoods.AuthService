@@ -2,8 +2,6 @@
 using FastTechFoods.AuthService.Application.Interfaces;
 using FastTechFoods.AuthService.Domain.Constants;
 using Microsoft.AspNetCore.Mvc;
-using System.Linq;
-using System.Security.Claims;
 
 namespace FastTechFoods.AuthService.Api.Controllers
 {

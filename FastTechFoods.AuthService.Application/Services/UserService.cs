@@ -1,6 +1,5 @@
 ﻿using FastTechFoods.AuthService.Application.DTOs;
 using FastTechFoods.AuthService.Application.Interfaces;
-using FastTechFoods.AuthService.Domain.Constants;
 using FastTechFoods.AuthService.Domain.Entities;
 using FastTechFoods.AuthService.Domain.Interfaces;
 using FluentValidation;

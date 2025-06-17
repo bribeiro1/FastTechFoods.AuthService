@@ -51,9 +51,6 @@ namespace FastTechFoods.AuthService.Application.Services
                 return AuthResponse.Fail(msg);
             }
 
-            if (!UserRoles.Todos.Contains(request.Role))
-                return AuthResponse.Fail("Role inválida");
-
             if (await _repo.ExistsAsync(request.Email, request.Cpf))
                 return AuthResponse.Fail("Usuário já existe");
 

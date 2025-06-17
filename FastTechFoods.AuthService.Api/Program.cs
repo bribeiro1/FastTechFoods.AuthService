@@ -82,6 +82,13 @@ namespace FastTechFoods.AuthService.Api
 
             var app = builder.Build();
 
+            //Migrations
+            using (var scope = app.Services.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
+                dbContext.Database.Migrate();
+            }
+
             app.UseSwagger();
             app.UseSwaggerUI();
 

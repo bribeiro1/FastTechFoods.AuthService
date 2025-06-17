@@ -6,11 +6,11 @@ using FastTechFoods.AuthService.Domain.Interfaces;
 
 namespace FastTechFoods.AuthService.Application.Services
 {
-    public class AuthService : IAuthService
+    public class UserService : IAuthService
     {
         private readonly IUserRepository _repo;
         private readonly ITokenService _token;
-        public AuthService(IUserRepository repo, ITokenService token)
+        public UserService(IUserRepository repo, ITokenService token)
         {
             _repo = repo;
             _token = token;

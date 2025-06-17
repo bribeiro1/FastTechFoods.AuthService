@@ -1,4 +1,5 @@
 using FastTechFoods.AuthService.Application.Interfaces;
+using FastTechFoods.AuthService.Application.Services;
 using FastTechFoods.AuthService.Domain.Interfaces;
 using FastTechFoods.AuthService.Infrastructure;
 using FastTechFoods.AuthService.Infrastructure.Repositories;
@@ -20,7 +21,7 @@ namespace FastTechFoods.AuthService.Api
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             builder.Services.AddScoped<IUserRepository, UserRepository>();
-            builder.Services.AddScoped<IAuthService, Application.Services.AuthService>();
+            builder.Services.AddScoped<IAuthService, UserService>();
             builder.Services.AddScoped<ITokenService, TokenService>();
 
             builder.Services.AddAuthentication("Bearer")

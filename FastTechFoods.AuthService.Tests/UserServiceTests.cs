@@ -1,22 +1,23 @@
 ﻿using FastTechFoods.AuthService.Application.DTOs;
 using FastTechFoods.AuthService.Application.Interfaces;
+using FastTechFoods.AuthService.Application.Services;
 using FastTechFoods.AuthService.Domain.Entities;
 using FastTechFoods.AuthService.Domain.Interfaces;
 using Moq;
 
 namespace FastTechFoods.AuthService.Tests
 {
-    public class AuthServiceTests
+    public class UserServiceTests
     {
         private readonly Mock<IUserRepository> _userRepoMock;
         private readonly Mock<ITokenService> _tokenServiceMock;
         private readonly IAuthService _authService;
 
-        public AuthServiceTests()
+        public UserServiceTests()
         {
             _userRepoMock = new Mock<IUserRepository>();
             _tokenServiceMock = new Mock<ITokenService>();
-            _authService = new Application.Services.AuthService(
+            _authService = new UserService(
                 _userRepoMock.Object,
                 _tokenServiceMock.Object
             );

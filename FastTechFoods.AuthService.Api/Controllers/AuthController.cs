@@ -2,6 +2,7 @@
 using FastTechFoods.AuthService.Application.Interfaces;
 using FastTechFoods.AuthService.Domain.Constants;
 using Microsoft.AspNetCore.Mvc;
+using System.Linq;
 using System.Security.Claims;
 
 namespace FastTechFoods.AuthService.Api.Controllers
@@ -35,18 +36,14 @@ namespace FastTechFoods.AuthService.Api.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
-            var currentUserRole = User.FindFirst(ClaimTypes.Role)?.Value;
-
-            if ((request.Role == UserRoles.Cliente || request.Role == UserRoles.Atendente) &&
-                currentUserRole != UserRoles.Gerente)
-            {
-                return Forbid();
-            }
-
             var validRoles = new[] { UserRoles.Gerente, UserRoles.Atendente, UserRoles.Cliente };
             if (!validRoles.Contains(request.Role))
-            {
                 return BadRequest("Perfil inválido.");
+
+            if (request.Role != UserRoles.Cliente)
+            {
+                if (!User.Identity?.IsAuthenticated ?? true || !User.IsInRole(UserRoles.Gerente))
+                    return Forbid();
             }
 
             var result = await _authService.RegisterAsync(request);

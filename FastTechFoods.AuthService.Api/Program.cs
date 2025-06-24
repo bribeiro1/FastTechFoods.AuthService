@@ -34,9 +34,6 @@ namespace FastTechFoods.AuthService.Api
             // FluentValidation
             builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
 
-            var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY") ??
-                builder.Configuration["Jwt:Key"]!;
-
             // Autentica��o JWT
             builder.Services.AddAuthentication("Bearer")
                 .AddJwtBearer("Bearer", options =>
@@ -47,7 +44,8 @@ namespace FastTechFoods.AuthService.Api
                         ValidateAudience = false,
                         ValidateLifetime = true,
                         ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtKey))
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(
+                            builder.Configuration["Jwt:Key"]!))
                     };
                 });
 

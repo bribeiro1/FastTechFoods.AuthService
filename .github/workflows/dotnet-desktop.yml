@@ -15,8 +15,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      Solution_Name: OrderService.sln
-      ProjectTest_Name:  OrderService.Tests/OrderService.Tests.csproj
+      Solution_Name: FastTechFoods.AuthService.sln
+      ProjectTest_Name:  FastTechFoods.AuthService.Tests/FastTechFoods.AuthService.Tests.csproj
       IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_IMAGENAME }}
 
     steps:

@@ -18,12 +18,15 @@ namespace FastTechFoods.AuthService.Api
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            
+            var connectionString = Environment.GetEnvironmentVariable("CONNECTION_DATABASE") ??
+                builder.Configuration.GetConnectionString("DefaultConnection");
 
             // DbContext
             builder.Services.AddDbContext<AuthDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlServer(connectionString));
 
-            // Repositórios e Serviços
+            // Repositï¿½rios e Serviï¿½os
             builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<ITokenService, TokenService>();
@@ -31,7 +34,7 @@ namespace FastTechFoods.AuthService.Api
             // FluentValidation
             builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
 
-            // Autenticação JWT
+            // Autenticaï¿½ï¿½o JWT
             builder.Services.AddAuthentication("Bearer")
                 .AddJwtBearer("Bearer", options =>
                 {
